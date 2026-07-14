@@ -21,10 +21,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build mod jar
+        working-directory: boatfly-forge
         run: gradle build --no-daemon --stacktrace
 
       - name: Upload built jar
         uses: actions/upload-artifact@v4
         with:
           name: boatfly-forge-jar
-          path: build/libs/*.jar
+          path: boatfly-forge/build/libs/*.jar
