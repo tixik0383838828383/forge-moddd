@@ -1,22 +1,35 @@
 package com.boatfly;
 
+import com.mojang.brigadier.arguments.FloatArgumentType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-/**
- * Handles events fired on the FORGE event bus: the per-tick logic.
- *
- * Ported from the Fabric mod's ClientTickEvents.END_CLIENT_TICK callback,
- * i.e. BoatFlyClient.onRenderTick(MinecraftClient).
- */
 @Mod.EventBusSubscriber(modid = BoatFly.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class BoatFlyForgeBusEvents {
+
+    @SubscribeEvent
+    public static void registerCommands(RegisterClientCommandsEvent event) {
+        event.getDispatcher().register(
+                Commands.literal("boatspeed").then(
+                        Commands.argument("value", FloatArgumentType.floatArg())
+                                .executes(context -> {
+                                    double value = Math.round(
+                                            FloatArgumentType.getFloat(context, "value") * 1000.0
+                                    ) / 1000.0;
+                                    BoatFlyClient.changeSpeed(Minecraft.getInstance(), value, false);
+                                    return (int) value;
+                                })
+                )
+        );
+    }
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -56,7 +69,6 @@ public class BoatFlyForgeBusEvents {
             BoatFlyClient.changeSpeed(client, BoatFlyClient.boatVelocity + 1.0, false);
         }
 
-        // Vertical control while flying (jump key)
         if (client.options.keyJump.isDown() && BoatFlyClient.boatFlyOn) {
             if (!client.player.isPassenger()) {
                 return;
@@ -68,7 +80,6 @@ public class BoatFlyForgeBusEvents {
             vehicle.setDeltaMovement(new Vec3(velocity.x, motionY, velocity.z));
         }
 
-        // Horizontal speed multiplier (sprint key)
         if (client.options.keySprint.isDown() && BoatFlyClient.boatSpeed != 1.0) {
             if (!client.player.isPassenger()) {
                 return;
